@@ -1,0 +1,25 @@
+syntax = "proto3";
+package ProtoZeroSharp.Tests;
+
+option csharp_namespace = "ProtoZeroSharp.Tests";
+
+message RootMessage
+{
+  repeated TestMessage messages = 1;
+}
+
+message TestMessage
+{
+  uint64 a = 1;
+  int64 b = 2;
+  optional uint32 c = 3;
+  optional string d = 4;
+  repeated string e = 5;
+  repeated SubMessage f = 99999;
+}
+
+message SubMessage
+{
+  int32 id = 1;
+  string name = 2;
+}

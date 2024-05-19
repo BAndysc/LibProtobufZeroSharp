@@ -1,0 +1,3 @@
+[submodule "native/protozero"]
+	path = native/protozero
+	url = https://github.com/mapbox/protozero.git
