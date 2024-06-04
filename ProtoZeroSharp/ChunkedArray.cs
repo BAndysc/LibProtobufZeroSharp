@@ -51,8 +51,9 @@ internal unsafe partial struct ChunkedArray
     /// <exception cref="ObjectDisposedException"></exception>
     public Span<byte> ReserveContiguousSpan(int length)
     {
+#if DEBUG
         AssertNotDisposed();
-
+#endif
         if (last->FreeBytes < length)
         {
             last->Next = Chunk.AllocChunk(Math.Max(DefaultChunkSize, length));
@@ -71,10 +72,11 @@ internal unsafe partial struct ChunkedArray
     /// <exception cref="InvalidOperationException"></exception>
     public void MoveForward(int length)
     {
+#if DEBUG
         AssertNotDisposed();
-
         if (last->Used + length > last->Length)
             throw new InvalidOperationException("Moving forward would exceed the current chunk's capacity.");
+#endif
         last->Used += length;
     }
 
@@ -83,8 +85,9 @@ internal unsafe partial struct ChunkedArray
     /// </summary>
     public int GetTotalLength()
     {
+#if DEBUG
         AssertNotDisposed();
-
+#endif
         int totalLength = 0;
         var chunk = first;
         while (chunk != null)

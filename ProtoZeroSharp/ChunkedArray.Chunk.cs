@@ -25,8 +25,10 @@ internal unsafe partial struct ChunkedArray
 
         public Span<byte> GetSpan(int offset, int spanLength)
         {
+#if DEBUG
             if (spanLength > Length - offset)
                 throw new InvalidOperationException("Requested span is larger than the available data.");
+#endif
             return new Span<byte>(data + offset, spanLength);
         }
 

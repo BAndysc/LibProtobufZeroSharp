@@ -28,7 +28,7 @@ public class ProtoWriterTests
                 writer.AddVarInt(SubMessage.IdFieldNumber, i);
                 writer.AddBytes(SubMessage.NameFieldNumber, Encoding.UTF8.GetBytes($"Name {i}"));
 
-                writer.CloseSub();
+                writer.CloseSub(false);
             }
         }
 

@@ -1,10 +1,12 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace ProtoZeroSharp;
 
 internal static class ProtobufFormat
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ulong EncodeKey(int fieldNumber, ProtoWireType wireType)
     {
         return ((ulong)fieldNumber << 3) | (ulong)wireType;
@@ -23,6 +25,7 @@ internal static class ProtobufFormat
     /// <summary>
     /// Returns the upper bound of the length of a bytes field.
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int BytesFieldLenUpperBound(int payloadLength) => VarInt.MaxBytesCount * 2 + payloadLength; // message id + length + payload
 
     /// <summary>
@@ -33,6 +36,7 @@ internal static class ProtobufFormat
     /// <param name="fieldNumber">Proto message id</param>
     /// <param name="value">Value of the message</param>
     /// <returns>Number of bytes written</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteVarIntField(Span<byte> output, int fieldNumber, ulong value)
     {
         int written = VarInt.WriteVarint(output, EncodeKey(fieldNumber, ProtoWireType.VarInt));
@@ -40,15 +44,24 @@ internal static class ProtobufFormat
         return written;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteLengthFieldHeader(Span<byte> output, int messageId)
     {
         int written = VarInt.WriteVarint(output, EncodeKey(messageId, ProtoWireType.Length));
         return written;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteLengthFieldLength(Span<byte> output, int length)
     {
         int written = VarInt.WriteVarint(output, length);
+        return written;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteLengthFieldLength(Span<byte> output, int length, int fixedBytesSize)
+    {
+        int written = VarInt.WriteVarintFixedSize(output, (ulong)length, fixedBytesSize);
         return written;
     }
 
@@ -60,6 +73,7 @@ internal static class ProtobufFormat
     /// <param name="fieldNumber">Proto message id</param>
     /// <param name="payload">Buffer to write</param>
     /// <returns>Number of bytes written</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteBytes(Span<byte> output, int fieldNumber, ReadOnlySpan<byte> payload)
     {
 #if DEBUG
@@ -82,6 +96,7 @@ internal static class ProtobufFormat
     /// <param name="payloadBytesCount">Precalculatd number of bytes of utf-8 encoding of the given payload</param>
     /// <param name="payload">String to write</param>
     /// <returns>Number of bytes written</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static unsafe int WriteString(Span<byte> output, int fieldNumber, int payloadBytesCount, string payload)
     {
 #if DEBUG

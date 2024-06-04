@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFrameworks>net7.0;net8.0</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -38,7 +38,7 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>True</Visible>
         </None>
-        <None Include="$(MSBuildThisFileDirectory)..\native\libprotozero.dll" Condition="Exists('$(MSBuildThisFileDirectory)..\native\protozero.dll')">
+        <None Include="$(MSBuildThisFileDirectory)..\native\protozero.dll" Condition="Exists('$(MSBuildThisFileDirectory)..\native\protozero.dll')">
             <Link>protozero.dll</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Visible>True</Visible>

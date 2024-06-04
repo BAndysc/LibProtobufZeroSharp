@@ -1,16 +1,18 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Jobs;
 using Google.Protobuf;
 using ProtoZeroSharp;
 using ProtoZeroSharp.Tests;
 
 namespace Benchmarks;
 
-[SimpleJob]
+[SimpleJob(RuntimeMoniker.Net80)]
 [MemoryDiagnoser]
 public partial class ProtoZeroVsCanonical
 {
-    private byte[] output = new byte[64 * 1024 * 1024]; // I have precalculated the message and I know this is enough to store it all
+    private byte[] output = new byte[128 * 1024 * 1024]; // I have precalculated the message and I know this is enough to store it all
 
     [LibraryImport("protozero", EntryPoint = "WriteProto")]
     public static unsafe partial int NativeProto(int messagesCount, byte* output);
@@ -30,7 +32,41 @@ public partial class ProtoZeroVsCanonical
     }
 
     [Benchmark]
-    public void ProtoZeroSharp()
+    public unsafe void PerfectSerializer()
+    {
+        #if NET8_0
+        ChunkedArray array = new ChunkedArray();
+        for (int j = 0; j < 200000; ++j)
+        {
+            var span = array.ReserveContiguousSpan(sizeof(PerfectSerializer.RootMessageStruct));
+
+            ref PerfectSerializer.RootMessageStruct refStruct = ref Unsafe.As<byte, PerfectSerializer.RootMessageStruct>(ref span.GetPinnableReference());
+
+            refStruct.a = ulong.MaxValue;
+            refStruct.b = long.MinValue;
+            "Hello, World!"u8.CopyTo(refStruct.d);
+            "Msg 1"u8.CopyTo(refStruct.e1);
+            "Msg 2"u8.CopyTo(refStruct.e2);
+            "Msg 3"u8.CopyTo(refStruct.e3);
+            "Msg 4"u8.CopyTo(refStruct.e4);
+
+            for (int i = 0; i < 9; ++i)
+            {
+                refStruct.f[i].id = i;
+                "Inner Message"u8.CopyTo(refStruct.f[i].name);
+            }
+        }
+
+        array.CopyTo(output);
+
+        array.Free();
+#endif
+    }
+
+    [Benchmark]
+    [Arguments(true)]
+    [Arguments(false)]
+    public void ProtoZeroSharp(bool optimizeSizeOverPerformance)
     {
         ProtoWriter writer = new ProtoWriter();
 
@@ -52,10 +88,10 @@ public partial class ProtoZeroVsCanonical
                 writer.AddVarInt(SubMessage.IdFieldNumber, i);
                 writer.AddBytes(SubMessage.NameFieldNumber, "Inner Message"u8);
 
-                writer.CloseSub();
+                writer.CloseSub(optimizeSizeOverPerformance);
             }
 
-            writer.CloseSub();
+            writer.CloseSub(optimizeSizeOverPerformance);
         }
 
         writer.CopyTo(output);

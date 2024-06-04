@@ -13,18 +13,23 @@ Time for some benchmarks!
  * CanonicalProto - The official, object-oriented protobuf implementation for C#
  * ProtoZeroNative - [ProtoZero](https://github.com/mapbox/protozero) compiled with -O3 flags for comparison
  * **ProtoZeroSharp** - This project - a struct based, zero-alloc implementation
+ * PerfectSerializer - an "ideal" serializer that just copies the data to the output buffer
 
 Tested on Apple M2 Pro 12C
 
 ```
-| Method          | Mean      | Error    | StdDev   | Ratio | Gen0       | Gen1       | Gen2      | Allocated   | Alloc Ratio |
-|---------------- |----------:|---------:|---------:|------:|-----------:|-----------:|----------:|------------:|------------:|
-| CanonicalProto  | 505.30 ms | 2.808 ms | 2.627 ms |  1.00 | 23000.0000 | 13000.0000 | 4000.0000 | 168998184 B |       1.000 |
-| ProtoZeroNative | 101.77 ms | 1.114 ms | 0.987 ms |  0.20 |          - |          - |         - |       147 B |       0.000 |
-| ProtoZeroSharp  |  72.75 ms | 0.989 ms | 0.925 ms |  0.14 |          - |          - |         - |       105 B |       0.000 |
+| Method           | Mean       | Error     | StdDev    | Ratio | RatioSD | Gen0       | Gen1       | Gen2      | Allocated   | Alloc Ratio |
+|------------------|-----------:|----------:|----------:|------:|--------:|-----------:|-----------:|----------:|------------:|------------:|
+| CanonicalProto   | 507.590 ms | 6.0581 ms | 5.0587 ms | 1.000 |    0.00 | 23000.0000 | 13000.0000 | 4000.0000 | 168998144 B |       1.000 |
+| ProtoZeroNative  | 101.937 ms | 0.9745 ms | 0.8639 ms | 0.201 |    0.00 |          - |          - |         - |       147 B |       0.000 |
+| ProtoZeroSharp   |  48.822 ms | 0.4310 ms | 0.4031 ms |     ? |       ? |          - |          - |         - |        67 B |           ? |
+| PerfectSerializer|   1.337 ms | 0.0231 ms | 0.0205 ms | 0.003 |    0.00 |          - |          - |         - |         1 B |       0.000 |
+
 ```
 
-The results are more than promising. Message writing is 7 times faster than the official implementation and allocates zero additional bytes compared to 168 MB in the official implementation! (For reference, the final encoded message is 52 MB). Interestingly, this even outperforms the ProtoZero C++ implementation. Could this be due to native call overhead? If anyone has insights, I'm curious to know!
+The results are more than promising. Message writing is 10 times faster than the official implementation and allocates zero additional bytes compared to 168 MB in the official implementation! (For reference, the final encoded message is 52 MB). Interestingly, this even outperforms the ProtoZero C++ implementation.
+
+To test native ProtoZero yourself, you need to download the submodule first `git submodule update --init --recursive` and run `native/build.sh` or `native/build.cmd` to build it first. On Windows, you have to execute this batch script from x64 VS Developer Console, as it invokes `cl.exe` command.
 
 ## Usage
 

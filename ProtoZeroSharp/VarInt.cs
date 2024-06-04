@@ -32,6 +32,33 @@ internal static class VarInt
         return index;
     }
 
+    /// <summary>
+    /// Writes a variable-length integer to the given output span in a fixed size.
+    /// It might be redundant, if the value is small, but it's useful for writing fixed-size varints.
+    /// </summary>
+    /// <param name="output">Buffer to write varint to</param>
+    /// <param name="value">Value to write</param>
+    /// <param name="bytes">Number of bytes to write</param>
+    /// <returns>Number of bytes written.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteVarintFixedSize(Span<byte> output, ulong value, int bytes)
+    {
+#if DEBUG
+        if (output.Length < bytes)
+            throw new ArgumentException($"Output buffer must be at least {bytes} bytes long to fit the value");
+#endif
+        int index = 0;
+
+        for (int i = 0; i < bytes - 1; ++i)
+        {
+            output[index++] = (byte)(value | 0x80);
+            value >>= 7;
+        }
+        output[index++] = (byte)value;
+
+        return index;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteVarint(Span<byte> output, int value)
     {

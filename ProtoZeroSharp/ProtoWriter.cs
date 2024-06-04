@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -91,19 +92,26 @@ public unsafe struct ProtoWriter
         currentMessageLength = 0;
     }
 
-    public void CloseSub()
+    public void CloseSub(bool optimizeSizeOverPerformance = true)
     {
-        var lastSubMessageStart = submessagesStack.Peek();
-        submessagesStack.Pop();
+        var lastSubMessageStart = submessagesStack.PeekAndPop();
 
         var lengthSpan = lastSubMessageStart.Chunk->GetSpan(lastSubMessageStart.Offset);
-        int written = ProtobufFormat.WriteLengthFieldLength(lengthSpan, currentMessageLength);
-        if (written < VarInt.MaxBytesCount)
+        int written;
+        if (optimizeSizeOverPerformance)
         {
-            lastSubMessageStart.Chunk->Erase(lastSubMessageStart.Offset + written, VarInt.MaxBytesCount - written);
+            written = ProtobufFormat.WriteLengthFieldLength(lengthSpan, currentMessageLength);
+            if (written < VarInt.MaxBytesCount)
+            {
+                lastSubMessageStart.Chunk->Erase(lastSubMessageStart.Offset + written, VarInt.MaxBytesCount - written);
+            }
+        }
+        else
+        {
+            written = ProtobufFormat.WriteLengthFieldLength(lengthSpan, currentMessageLength, VarInt.MaxBytesCount);
+            Debug.Assert(written == VarInt.MaxBytesCount);
         }
 
-        currentMessageLength = lengthsStack.Peek() + written + currentMessageLength;
-        lengthsStack.Pop();
+        currentMessageLength = lengthsStack.PeekAndPop() + written + currentMessageLength;
     }
 }

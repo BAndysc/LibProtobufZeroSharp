@@ -32,15 +32,28 @@ internal unsafe struct StackArray<T> where T : struct
 
     public ref T Peek()
     {
+#if DEBUG
         if (count == 0)
             throw new InvalidOperationException("StackArray is empty.");
+#endif
         return ref this[count - 1];
     }
 
     public void Pop()
     {
+#if DEBUG
         if (count == 0)
             throw new InvalidOperationException("StackArray is empty.");
+#endif
         count--;
+    }
+
+    public T PeekAndPop()
+    {
+#if DEBUG
+        if (count == 0)
+            throw new InvalidOperationException("StackArray is empty.");
+#endif
+        return this[--count];
     }
 }
