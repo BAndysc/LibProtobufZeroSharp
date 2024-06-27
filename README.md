@@ -67,3 +67,13 @@ writer.WriteTo(file); // save the results
 
 writer.Free(); // Must be called, otherwise unmanaged memory is leaked!
 ```
+
+
+# Deserialization
+
+```
+| Method         | Mean       | Error    | StdDev   | Ratio | Gen0        | Gen1        | Gen2       | Allocated  | Alloc Ratio |
+|--------------- |-----------:|---------:|---------:|------:|------------:|------------:|-----------:|-----------:|------------:|
+| ProtoZeroSharp |   385.9 ms |  3.11 ms |  2.60 ms |  0.04 |           - |           - |          - |  409.34 MB |        0.33 |
+| CanonicalProto | 9,932.7 ms | 53.82 ms | 44.95 ms |  1.00 | 176000.0000 | 100000.0000 | 24000.0000 | 1250.61 MB |        1.00 |
+```

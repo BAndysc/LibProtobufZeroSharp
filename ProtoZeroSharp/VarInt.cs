@@ -6,7 +6,30 @@ namespace ProtoZeroSharp;
 internal static class VarInt
 {
     internal const int MaxBytesCount = 10;
-    
+
+    internal static int ReadVarint(Span<byte> input, out ulong value)
+    {
+        if ((input[0] & 0x80) == 0)
+        {
+            value = input[0];
+            return 1;
+        }
+        value = 0;
+        int shift = 0;
+        int index = 0;
+        while (index < input.Length)
+        {
+            byte b = input[index++];
+            value |= (ulong)(b & 0x7F) << shift;
+            if ((b & 0x80) == 0)
+            {
+                return index;
+            }
+            shift += 7;
+        }
+        throw new FormatException("Invalid varint");
+    }
+
     /// <summary>
     /// Writes a variable-length integer to the given output span.
     /// </summary>
@@ -20,8 +43,8 @@ internal static class VarInt
         if (output.Length < MaxBytesCount)
             throw new ArgumentException($"Output buffer must be at least {MaxBytesCount} bytes long to fit any varint");
 #endif
-        int index = 0;
 
+        int index = 0;
         while (value >= 0x80)
         {
             output[index++] = (byte)(value | 0x80);

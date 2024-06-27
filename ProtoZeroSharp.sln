@@ -11,7 +11,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Other", "Other", "{71BE4649
 		native\protozero_test.cpp = native\protozero_test.cpp
 		native\build.sh = native\build.sh
 		native\build.cmd = native\build.cmd
+		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProtoZeroGenerator", "ProtoZeroGenerator\ProtoZeroGenerator.csproj", "{A6E8091A-3930-4853-93D9-FE68D696897D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,5 +34,9 @@ Global
 		{3C254A40-16D3-42C5-B11E-CAD216558DA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3C254A40-16D3-42C5-B11E-CAD216558DA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3C254A40-16D3-42C5-B11E-CAD216558DA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6E8091A-3930-4853-93D9-FE68D696897D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6E8091A-3930-4853-93D9-FE68D696897D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6E8091A-3930-4853-93D9-FE68D696897D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6E8091A-3930-4853-93D9-FE68D696897D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

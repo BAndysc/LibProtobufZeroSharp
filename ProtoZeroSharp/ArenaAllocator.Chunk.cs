@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace ProtoZeroSharp;
 
-internal unsafe partial struct ChunkedArray
+public unsafe partial struct ArenaAllocator
 {
     /// <summary>
     /// Single chunk of contiguous memory.

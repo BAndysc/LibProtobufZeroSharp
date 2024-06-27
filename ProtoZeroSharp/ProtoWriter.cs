@@ -9,24 +9,24 @@ namespace ProtoZeroSharp;
 
 public unsafe struct ProtoWriter
 {
-    private readonly ChunkedArray* memory;
-    private StackArray<ChunkedArray.ChunkOffset> submessagesStack;
+    private readonly ArenaAllocator* memory;
+    private StackArray<ArenaAllocator.ChunkOffset> submessagesStack;
     private StackArray<int> lengthsStack;
     private bool ownsMemory;
     private int currentMessageLength;
 
-    public ProtoWriter() : this((ChunkedArray*)Marshal.AllocHGlobal(sizeof(ChunkedArray)))
+    public ProtoWriter() : this((ArenaAllocator*)Marshal.AllocHGlobal(sizeof(ArenaAllocator)))
     {
         ownsMemory = true;
-        *memory = new ChunkedArray();
+        *memory = new ArenaAllocator();
     }
 
-    private ProtoWriter(ChunkedArray* memory)
+    private ProtoWriter(ArenaAllocator* memory)
     {
         this.memory = memory;
         currentMessageLength = 0;
         ownsMemory = false;
-        submessagesStack = new StackArray<ChunkedArray.ChunkOffset>();
+        submessagesStack = new StackArray<ArenaAllocator.ChunkOffset>();
         lengthsStack = new StackArray<int>();
     }
 
@@ -49,6 +49,22 @@ public unsafe struct ProtoWriter
     public void WriteTo(Stream stream)
     {
         memory->WriteTo(stream);
+    }
+
+    public void AddFloat(int messageId, float value)
+    {
+        var span = memory->ReserveContiguousSpan(ProtobufFormat.Fixed32FieldLenUpperBound);
+        int written = ProtobufFormat.WriteFloatField(span, messageId, value);
+        memory->MoveForward(written);
+        currentMessageLength += written;
+    }
+
+    public void AddDouble(int messageId, double value)
+    {
+        var span = memory->ReserveContiguousSpan(ProtobufFormat.Fixed64FieldLenUpperBound);
+        int written = ProtobufFormat.WriteDoubleField(span, messageId, value);
+        memory->MoveForward(written);
+        currentMessageLength += written;
     }
 
     public void AddVarInt(int messageId, long value) => AddVarInt(messageId, (ulong)value);

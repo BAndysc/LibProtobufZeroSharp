@@ -1,7 +1,7 @@
 syntax = "proto3";
 package ProtoZeroSharp.Tests;
 
-option csharp_namespace = "ProtoZeroSharp.Tests.Canonical";
+option csharp_namespace = "ProtoZeroSharp.Tests.Zero";
 
 message TestMessage
 {
@@ -23,9 +23,9 @@ message SubMessage
 message OneOfMessage
 {
   oneof type {
-      MessageScalarTypes scalar = 1;
-      MessageOptionalScalarTypes optionalScalar = 2;
-      MessageRepeatedScalarTypes repeatedScalar = 3;
+    MessageScalarTypes scalar = 1;
+    MessageOptionalScalarTypes optionalScalar = 2;
+    MessageRepeatedScalarTypes repeatedScalar = 3;
   }
 }
 

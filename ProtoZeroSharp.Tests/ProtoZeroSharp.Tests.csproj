@@ -34,7 +34,15 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\ProtoZeroGenerator\ProtoZeroGenerator.csproj"
+                        OutputItemType="Analyzer"
+                        ReferenceOutputAssembly="false"/>
+        
       <ProjectReference Include="..\ProtoZeroSharp\ProtoZeroSharp.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <AdditionalFiles Include="Protos\structures_zero.proto" />
+    </ItemGroup>
+    
 </Project>

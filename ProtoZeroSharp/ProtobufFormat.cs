@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace ProtoZeroSharp;
@@ -12,10 +13,26 @@ internal static class ProtobufFormat
         return ((ulong)fieldNumber << 3) | (ulong)wireType;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static (int, ProtoWireType) DecodeKey(ulong key)
+    {
+        return ((int)(key >> 3), (ProtoWireType)(key & 0x7));
+    }
+
     /// <summary>
     /// Returns the upper bound of the length of a var int field.
     /// </summary>
     internal const int VarIntFieldLenUpperBound = VarInt.MaxBytesCount * 2; // message id + value
+
+    /// <summary>
+    /// Returns the upper bound of the length of a fixed32 field.
+    /// </summary>
+    internal const int Fixed32FieldLenUpperBound = VarInt.MaxBytesCount + 4; // message id + 4 bytes for fixed32
+
+    /// <summary>
+    /// Returns the upper bound of the length of a fixed64 field.
+    /// </summary>
+    internal const int Fixed64FieldLenUpperBound = VarInt.MaxBytesCount + 8; // message id + 8 bytes for fixed64
 
     /// <summary>
     /// Returns the upper bound of the length of a submessage header.
@@ -42,6 +59,38 @@ internal static class ProtobufFormat
         int written = VarInt.WriteVarint(output, EncodeKey(fieldNumber, ProtoWireType.VarInt));
         written += VarInt.WriteVarint(output.Slice(written), value);
         return written;
+    }
+
+    internal static unsafe int WriteFloatField(Span<byte> output, int fieldNumber, float value)
+    {
+        return WriteFixedField(output, fieldNumber, new ReadOnlySpan<byte>(&value, sizeof(float)));
+    }
+
+    internal static unsafe int WriteDoubleField(Span<byte> output, int fieldNumber, double value)
+    {
+        return WriteFixedField(output, fieldNumber, new ReadOnlySpan<byte>(&value, sizeof(double)));
+    }
+
+    internal static int WriteFixedField(Span<byte> output, int fieldNumber, ReadOnlySpan<byte> value)
+    {
+        var type = value.Length switch
+        {
+            4 => ProtoWireType.Fixed32,
+            8 => ProtoWireType.Fixed64,
+            _ => throw new ArgumentException("Invalid fixed field size")
+        };
+        int written = VarInt.WriteVarint(output, EncodeKey(fieldNumber, type));
+        value.CopyTo(output.Slice(written));
+        written += value.Length;
+        return written;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int ReadFieldHeader(Span<byte> output, out int fieldNumber, out ProtoWireType wireType)
+    {
+        int read = VarInt.ReadVarint(output, out var encodedValue);
+        (fieldNumber, wireType) = DecodeKey(encodedValue);
+        return read;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

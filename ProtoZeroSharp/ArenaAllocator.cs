@@ -13,7 +13,7 @@ namespace ProtoZeroSharp;
 /// which can be moved forward, but you should never Move Forward more than you previously
 /// reserved using TakeContiguousSpan.
 /// </summary>
-internal unsafe partial struct ChunkedArray
+public unsafe partial struct ArenaAllocator
 {
     private const int DefaultChunkSize = 16384;
 
@@ -21,16 +21,16 @@ internal unsafe partial struct ChunkedArray
     private Chunk* last;
 
     /// <summary>
-    /// Creates a new ChunkedArray with a default chunk size of 4096 bytes.
+    /// Creates a new ArenaAllocator with a default chunk size of 4096 bytes.
     /// </summary>
-    public ChunkedArray()
+    public ArenaAllocator()
     {
         first = Chunk.AllocChunk(DefaultChunkSize);
         last = first;
     }
 
     /// <summary>
-    /// Frees all the memory allocated by this ChunkedArray.
+    /// Frees all the memory allocated by this ArenaAllocator.
     /// </summary>
     public void Free()
     {
@@ -39,7 +39,7 @@ internal unsafe partial struct ChunkedArray
     }
 
     /// <summary>
-    /// Returns the current position in the ChunkedArray.
+    /// Returns the current position in the ArenaAllocator.
     /// </summary>
     public ChunkOffset Position => new ChunkOffset(last, last->Used);
 
@@ -64,6 +64,13 @@ internal unsafe partial struct ChunkedArray
         return span;
     }
 
+    public Span<byte> TakeContiguousSpan(int length)
+    {
+        var span = ReserveContiguousSpan(length);
+        MoveForward(length);
+        return span;
+    }
+
     /// <summary>
     /// Moves the current position forward by the given length.
     /// You should only call this method after you reserved a contiguous span using ReserveContiguousSpan.
@@ -81,7 +88,7 @@ internal unsafe partial struct ChunkedArray
     }
 
     /// <summary>
-    /// Calculates the total length of all the chunks in this ChunkedArray.
+    /// Calculates the total length of all the chunks in this ArenaAllocator.
     /// </summary>
     public int GetTotalLength()
     {
@@ -100,7 +107,7 @@ internal unsafe partial struct ChunkedArray
     }
 
     /// <summary>
-    /// Copies the entire content of this ChunkedArray to the given destination span.
+    /// Copies the entire content of this ArenaAllocator to the given destination span.
     /// </summary>
     /// <param name="destination"></param>
     public int CopyTo(Span<byte> destination)
@@ -119,7 +126,7 @@ internal unsafe partial struct ChunkedArray
     }
 
     /// <summary>
-    /// Writes the entire content of this ChunkedArray to the given stream.
+    /// Writes the entire content of this ArenaAllocator to the given stream.
     /// </summary>
     /// <param name="stream"></param>
     public void WriteTo(Stream stream)
@@ -145,6 +152,6 @@ internal unsafe partial struct ChunkedArray
     private void AssertNotDisposed()
     {
         if (last == null)
-            throw new ObjectDisposedException("This ChunkedArray has been disposed.");
+            throw new ObjectDisposedException("This ArenaAllocator has been disposed.");
     }
 }

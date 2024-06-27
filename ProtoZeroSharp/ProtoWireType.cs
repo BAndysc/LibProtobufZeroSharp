@@ -1,6 +1,6 @@
 namespace ProtoZeroSharp;
 
-internal enum ProtoWireType
+public enum ProtoWireType
 {
     VarInt = 0,
     Fixed64 = 1,

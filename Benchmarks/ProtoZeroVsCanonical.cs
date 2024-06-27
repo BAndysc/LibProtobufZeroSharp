@@ -35,7 +35,7 @@ public partial class ProtoZeroVsCanonical
     public unsafe void PerfectSerializer()
     {
         #if NET8_0
-        ChunkedArray array = new ChunkedArray();
+        ArenaAllocator array = new ArenaAllocator();
         for (int j = 0; j < 200000; ++j)
         {
             var span = array.ReserveContiguousSpan(sizeof(PerfectSerializer.RootMessageStruct));
