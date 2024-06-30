@@ -14,22 +14,23 @@ Time for some benchmarks!
 
 * CanonicalProto - The official, object-oriented protobuf implementation for C#
 * ProtoZeroNative - [ProtoZero](https://github.com/mapbox/protozero) compiled with -O3 flags for comparison
-* **ProtoZeroSharp** - This project - a struct based, zero-alloc implementation
+* Protobuf.Net - [Protobuf.Net](https://github.com/protobuf-net/protobuf-net) - alternative protobuf implementation for C#
+* **ProtoZeroSharp** - This project - a struct based, zero-alloc implementation~~~~
 * PerfectSerializer - an "ideal" serializer that just copies the data to the output buffer
 
 Tested on Apple M2 Pro 12C
 
 ```
-| Method           | Mean       | Error     | StdDev    | Ratio | RatioSD | Gen0       | Gen1       | Gen2      | Allocated     | Alloc Ratio |
-|------------------|-----------:|----------:|----------:|------:|--------:|-----------:|-----------:|----------:|--------------:|------------:|
-| CanonicalProto   | 507.590 ms | 6.0581 ms | 5.0587 ms | 1.000 |    0.00 | 23000.0000 | 13000.0000 | 4000.0000 | 168 998 144 B |       1.000 |
-| ProtoZeroNative  | 101.937 ms | 0.9745 ms | 0.8639 ms | 0.201 |    0.00 |          - |          - |         - |         147 B |       0.000 |
-| ProtoZeroSharp   |  48.822 ms | 0.4310 ms | 0.4031 ms |     ? |       ? |          - |          - |         - |          67 B |           ? |
-| PerfectSerializer|   1.337 ms | 0.0231 ms | 0.0205 ms | 0.003 |    0.00 |          - |          - |         - |           1 B |       0.000 |
-
+| Method            | Mean       | Error     | StdDev    | Ratio | RatioSD | Gen0       | Gen1       | Gen2      | Allocated   | Alloc Ratio |
+|-------------------|-----------:|----------:|----------:|------:|--------:|-----------:|-----------:|----------:|------------:|------------:|
+| CanonicalProto    | 336.232 ms | 1.4800 ms | 1.3844 ms | 1.000 |    0.00 | 21000.0000 | 11000.0000 | 2000.0000 | 168996436 B |       1.000 |
+| Protobuf.Net      | 115.580 ms | 0.2154 ms | 0.1909 ms | 0.344 |    0.00 |          - |          - |         - |      1331 B |       0.000 |
+| ProtoZeroNative   |  99.940 ms | 0.9738 ms | 0.8632 ms | 0.297 |    0.00 |          - |          - |         - |       123 B |       0.000 |
+| PerfectSerializer |   1.295 ms | 0.0045 ms | 0.0042 ms | 0.004 |    0.00 |          - |          - |         - |         1 B |       0.000 |
+| ProtoZeroSharp    |  49.215 ms | 0.5472 ms | 0.5118 ms |     ? |       ? |          - |          - |         - |        67 B |           ? |
 ```
 
-The results are more than promising. Message writing is 10 times faster than the official implementation and allocates zero additional bytes compared to 168 MB in the official implementation! (For reference, the final encoded message is 52 MB). Interestingly, this even outperforms the ProtoZero C++ implementation.
+The results are more than promising. Message writing is 7 times faster than the official implementation and allocates zero additional bytes compared to 168 MB in the official implementation! (For reference, the final encoded message is 52 MB). Interestingly, this even outperforms the ProtoZero C++ implementation.
 
 However, it is important to add that the most of the cost in canonical implementation comes from the message creation itself. The writing in my tests took around 100 ms (still twice as slow) and did not allocate additional memory. But it doesn't really matter because with official Protobuf you are forced to create the message anyway, so the cost is not avoidable.
 
@@ -43,13 +44,15 @@ It is possible to decode messages on the fly, without allocating any memory at a
 Luckily, LibProtoZeroSharp can also deserialize the whole message into generated structures and that's the benchmark below.
 
 ```
-| Method         | Mean       | Error    | StdDev   | Ratio | Gen0        | Gen1        | Gen2       | Allocated  | Alloc Ratio |
-|--------------- |-----------:|---------:|---------:|------:|------------:|------------:|-----------:|-----------:|------------:|
-| ProtoZeroSharp |   385.9 ms |  3.11 ms |  2.60 ms |  0.04 |           - |           - |          - |  409.34 MB |        0.33 |
-| CanonicalProto | 9,932.7 ms | 53.82 ms | 44.95 ms |  1.00 | 176000.0000 | 100000.0000 | 24000.0000 | 1250.61 MB |        1.00 |
+| Method              | Mean       | Error    | StdDev   | Median     | Ratio | RatioSD | Gen0        | Gen1       | Gen2      | Allocated  | Alloc Ratio |
+|-------------------- |-----------:|---------:|---------:|-----------:|------:|--------:|------------:|-----------:|----------:|-----------:|------------:|
+| CanonicalProto      | 2,888.2 ms | 57.59 ms | 94.63 ms | 2,944.9 ms |  1.00 |    0.00 | 156000.0000 | 80000.0000 | 5000.0000 | 1238.20 MB |        1.00 |
+| Protobuf.Net        | 2,733.0 ms | 51.37 ms | 40.11 ms | 2,743.3 ms |  0.97 |    0.04 | 132000.0000 | 68000.0000 | 4000.0000 | 1033.85 MB |        0.83 |
+| Protobuf.Net_Struct | 2,163.3 ms | 31.53 ms | 27.95 ms | 2,172.4 ms |  0.77 |    0.03 | 116000.0000 | 60000.0000 | 4000.0000 |  907.35 MB |        0.73 |
+| ProtoZeroSharp      |   408.9 ms |  2.25 ms |  1.88 ms |   408.5 ms |  0.15 |    0.01 |           - |          - |         - |  429.98 MB |        0.35 |
 ```
 
-This is an example 150 MB protobuf message. The official implementation allocates 3 times more memory and is 25 (!) times slower. The results are even better than encoding!
+This is an example 150 MB protobuf message. The official implementation allocates 3 times more memory and is 7 times slower. I've also compared the results with alternative Protobuf.net implementation. By default it is only a bit faster than the official one, however, unlike the official implementation, with Protobuf.net I was able to change some of the classes into structs, which gave some speed boost. It is still far from the performance of LibProtoZeroSharp.
 
 ## Usage
 

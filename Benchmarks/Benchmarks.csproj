@@ -17,6 +17,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="protobuf-net" Version="3.2.30" />
     </ItemGroup>
 
     <ItemGroup>
