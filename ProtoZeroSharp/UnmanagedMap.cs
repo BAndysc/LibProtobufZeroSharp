@@ -30,10 +30,10 @@ public readonly unsafe struct UnmanagedMap<TKey, TValue> where TKey : unmanaged 
     {
         for (int i = 0; i < Length; ++i)
         {
-            if (Unsafe.AsRef(keys[i]).Equals(key))
+            if (Unsafe.AsRef(in keys[i]).Equals(key))
             {
                 found = true;
-                return ref Unsafe.AsRef(values[i]);
+                return ref Unsafe.AsRef(in values[i]);
             }
         }
 

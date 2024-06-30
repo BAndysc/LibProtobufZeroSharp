@@ -33,7 +33,7 @@ public readonly unsafe struct UnmanagedArray<T> where T : unmanaged
                 throw new IndexOutOfRangeException();
             }
 #endif
-            return ref Unsafe.AsRef(data[index]);
+            return ref Unsafe.AsRef(in data[index]);
         }
     }
 

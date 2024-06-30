@@ -3,8 +3,37 @@
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <LangVersion>11</LangVersion>
+        <LangVersion>12</LangVersion>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Title>ProtobufZeroSharp</Title>
+        <Authors>BAndysc</Authors>
+        <Description>Ultra fast, unmanaged protobuf encoder/decoder. Up to 10 times faster writing and up to 25 times faster reading.</Description>
+        <PackageProjectUrl>https://github.com/BAndysc/LibProtobufZeroSharp</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/BAndysc/LibProtobufZeroSharp</RepositoryUrl>
+        <PackageTags>protobuf</PackageTags>
+        <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+        <Version>0.5.0</Version>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
+    
+    <ItemGroup>
+        <None Include="..\README.md">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
+    
+    <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+        <PackageId>ProtobufZeroSharp.Debug</PackageId>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)'=='Release'">
+        <PackageId>ProtobufZeroSharp</PackageId>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(Configuration)'=='Debug'">
+        <None Include="$(ProjectDir)$(OutputPath)/$(AssemblyName).pdb" Pack="true" PackagePath="lib\$(TargetFramework)" />
+    </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="System.Memory" Version="4.5.5" />

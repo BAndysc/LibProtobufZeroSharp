@@ -8,7 +8,26 @@
         <IncludeBuildOutput>false</IncludeBuildOutput> <!-- Do not include the generator as a lib dependency -->
         <OutputItemType>Analyzer</OutputItemType>
         <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+
+        <PackageId>ProtobufZero.Generator</PackageId>
+        <Title>ProtobufZero.Generator</Title>
+        <Authors>BAndysc</Authors>
+        <Description>Ultra fast, unmanaged protobuf decoder generator. Up to 25 times faster reading.</Description>
+        <PackageProjectUrl>https://github.com/BAndysc/LibProtobufZeroSharp</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/BAndysc/LibProtobufZeroSharp</RepositoryUrl>
+        <PackageTags>protobuf</PackageTags>
+        <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+        <Version>0.5.0.1</Version>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\README.md">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Antlr4" Version="4.6.6" PrivateAssets="all" GeneratePathProperty="true"/>
@@ -18,13 +37,8 @@
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3" />
         
         <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-        
-        <None Update="google\protobuf\*.proto">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-
+        <None Include="$(PkgAntlr4_Runtime)\lib\netstandard1.1\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     </ItemGroup>
-
 
     <PropertyGroup>
         <GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>

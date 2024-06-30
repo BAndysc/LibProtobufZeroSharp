@@ -31,6 +31,8 @@ Tested on Apple M2 Pro 12C
 
 The results are more than promising. Message writing is 10 times faster than the official implementation and allocates zero additional bytes compared to 168 MB in the official implementation! (For reference, the final encoded message is 52 MB). Interestingly, this even outperforms the ProtoZero C++ implementation.
 
+However, it is important to add that the most of the cost in canonical implementation comes from the message creation itself. The writing in my tests took around 100 ms (still twice as slow) and did not allocate additional memory. But it doesn't really matter because with official Protobuf you are forced to create the message anyway, so the cost is not avoidable.
+
 To test native ProtoZero yourself, you need to download the submodule first `git submodule update --init --recursive` and run `native/build.sh` or `native/build.cmd` to build it first. On Windows, you have to execute this batch script from x64 VS Developer Console, as it invokes `cl.exe` command.
 
 
@@ -89,6 +91,8 @@ writer.WriteTo(file); // save the results
 allocator.Dispose(); // Must be called, otherwise unmanaged memory is leaked!
 ```
 
+> ⚠️⚠️⚠️ You may **NOT** use `ProtoWriter` after disposing the allocator! ⚠️⚠️⚠️
+
 ### Decoding
 
 Decoding can be done manually or using generated classes. The manual way is useful if you want to parse data into your own structures:
@@ -133,14 +137,14 @@ while (reader.Next())
 
 **Using generated classes:**
 
-1. Reference `ProtoZeroGenerator` package.
-2. Add protobuf files into .csproj as AdditionalFiles tag:
+1. Reference `ProtoZeroGenerator` and `LibProtoZeroSharp` packages.
+2. Add protobuf files into .csproj as AdditionalFiles tag (files must have .proto extension):
 ```xml
 <ItemGroup>
     <AdditionalFiles Include="structures.proto" />
 </ItemGroup>
 ```
-3. Use following code to read a message into a generated structure:
+3. Use the following code to read a message into a generated structure:
 ```csharp
 var allocator = new ArenaAllocator();
 var reader = new ProtoReader(bytes);
@@ -148,7 +152,23 @@ var reader = new ProtoReader(bytes);
 var generatedStructure = new GeneratedStructure(); // this is the name of your protobuf message you want to deserialize
 generatedStructure.Read(ref reader, ref allocator);
 
+// you can do whatever you want with generatedStructure here
+
 allocator.Dispose(); // Must be called, otherwise unmanaged memory is leaked!
+// do not use generatedStructure after disposing the allocator!
 ```
 
-⚠️⚠️⚠️ You may **NOT** use the structure after disposing the allocator! ⚠️⚠️⚠️
+> ⚠️⚠️⚠️ You may **NOT** use the structure after disposing the allocator! Including any nested structures! ⚠️⚠️⚠️
+> 
+> Decoded structure uses memory allocated by the allocator. When the allocator is disposed, the memory is freed and the structure becomes invalid.
+> You can do whatever you want with the structures as long as the allocator is alive.
+
+
+## A note about the unsafe code
+
+This library is faster than the official implementation because it uses unsafe code. This is a trade-off between performance and safety. As long as you follow the rules, you should be safe:
+1. Dispose the allocator when you are done with it, to avoid memory leaks. Without calling dispose, the memory will **never** be freed.
+2. **Do not use** the writer after disposing the allocator. When using `LibProtoZeroSharp.Debug` you will get managed exceptions, but in release mode, you will get segmentation faults!
+3. **Do not use** the generated structures after disposing the allocator. No matter if you use debug or release mode, you will get segmentation faults!
+4. You may copy the generated structures, but remember that they are just a shallow copy. And you may not use them after disposing the allocator.
+5. **Do not copy** the allocator! It is a struct and copying it will lead to bugs. Always pass it by `ref`.
