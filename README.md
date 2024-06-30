@@ -1,6 +1,6 @@
 # LibProtoZeroSharp
 
-This is an experimental and highly efficient protobuf encoder/decoder designed for C#. While Protobuf is straightforward to use, it often incurs extra allocations and performance overhead. LibProtoZeroSharp aims to minimize these drawbacks by offering a zero-additional-alloc solution (allocations only for the buffer for the message itself).
+This is an experimental highly efficient, but limited feature-set protobuf encoder/decoder designed for C#. While Protobuf is straightforward to use, it often incurs extra allocations and performance overhead. LibProtoZeroSharp aims to minimize these drawbacks by offering a zero-additional-alloc solution (allocations only for the buffer for the message itself).
 
 Inspired by [ProtoZero](https://github.com/mapbox/protozero), a custom C++ protobuf encoder/decoder. LibProtoZeroSharp is a fully managed C# version.
 
