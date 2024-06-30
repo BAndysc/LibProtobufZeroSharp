@@ -1,10 +1,15 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace ProtoZeroSharp;
 
+/// <summary>
+/// A naive, low level, unmanaged map of unmanaged types TKey and TValue.
+/// Doesn't do any hashing, just linear search.
+/// </summary>
+/// <typeparam name="TKey"></typeparam>
+/// <typeparam name="TValue"></typeparam>
 [DebuggerTypeProxy(typeof(UnmanagedMapDebugView<,>))]
 public readonly unsafe struct UnmanagedMap<TKey, TValue> where TKey : unmanaged where TValue : unmanaged
 {
@@ -25,10 +30,10 @@ public readonly unsafe struct UnmanagedMap<TKey, TValue> where TKey : unmanaged 
     {
         for (int i = 0; i < Length; ++i)
         {
-            if (Unsafe.AsRef<TKey>(keys[i]).Equals(key))
+            if (Unsafe.AsRef(keys[i]).Equals(key))
             {
                 found = true;
-                return ref Unsafe.AsRef<TValue>(values[i]);
+                return ref Unsafe.AsRef(values[i]);
             }
         }
 
@@ -42,11 +47,10 @@ public readonly unsafe struct UnmanagedMap<TKey, TValue> where TKey : unmanaged 
         valuesSpan = new Span<TValue>(values, Length);
     }
 
-    public static UnmanagedMap<TKey, TValue> AllocMap(int maxCount, ref ArenaAllocator memory)
+    public static UnmanagedMap<TKey, TValue> AllocMap<TAllocator>(int maxCount, ref TAllocator allocator) where TAllocator : unmanaged, IAllocator
     {
-        var keys = memory.TakeContiguousSpan(maxCount * sizeof(TKey));
-        var values = memory.TakeContiguousSpan(maxCount * sizeof(TValue));
-        return new UnmanagedMap<TKey, TValue>(maxCount, (TKey*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(keys)),
-            (TValue*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(values)));
+        var keys = allocator.Allocate<TKey>(maxCount);
+        var values = allocator.Allocate<TValue>(maxCount);
+        return new UnmanagedMap<TKey, TValue>(maxCount, keys, values);
     }
 }

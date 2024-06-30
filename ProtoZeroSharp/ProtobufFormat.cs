@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace ProtoZeroSharp;
@@ -86,7 +85,7 @@ internal static class ProtobufFormat
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int ReadFieldHeader(Span<byte> output, out int fieldNumber, out ProtoWireType wireType)
+    internal static int ReadFieldHeader(ReadOnlySpan<byte> output, out int fieldNumber, out ProtoWireType wireType)
     {
         int read = VarInt.ReadVarint(output, out var encodedValue);
         (fieldNumber, wireType) = DecodeKey(encodedValue);

@@ -21,10 +21,16 @@
 
     <ItemGroup>
         <Protobuf Include="Protos\structures.proto" GrpcServices="None" />
+        <Protobuf Include="Protos\structures_big.proto" GrpcServices="None" />
+        <AdditionalFiles Include="Protos\structures_big_zero.proto" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ProtoZeroSharp\ProtoZeroSharp.csproj" />
+        <ProjectReference Include="..\ProtoZeroGenerator\ProtoZeroGenerator.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"/>
+
+        <ProjectReference Include="..\ProtoZeroSharp\ProtoZeroSharp.csproj" />
     </ItemGroup>
 
     <ItemGroup>

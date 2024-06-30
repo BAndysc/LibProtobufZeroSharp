@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace ProtoZeroSharp;
 
 [DebuggerDisplay("{Text}")]
-public class Utf8StringDebugView
+internal class Utf8StringDebugView
 {
     public Utf8StringDebugView(Utf8String utf8String)
     {

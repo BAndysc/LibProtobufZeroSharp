@@ -1,16 +1,14 @@
 using System.Text;
-using ProtoZeroSharp.Tests.Zero;
 
 namespace ProtoZeroSharp.Tests;
 
 public class ProtoWriterTests
 {
-    private byte[] output = new byte[256 * 1024 * 1024];
-
     [Test]
-    public unsafe void Encode_Zero_Decode_Canonical()
+    public void Encode_Zero_Decode_Canonical()
     {
-        ProtoWriter writer = new ProtoWriter();
+        ArenaAllocator allocator = new();
+        ProtoWriter writer = new ProtoWriter(ref allocator);
 
         for (int j = 0; j < 1000; ++j)
         {
@@ -36,7 +34,7 @@ public class ProtoWriterTests
         var buffer = new byte[writer.GetTotalLength()];
         writer.CopyTo(buffer);
 
-        writer.Free();
+        allocator.Dispose();
 
         var msg = Canonical.TestMessage.Parser.ParseFrom(buffer);
     }
@@ -56,7 +54,8 @@ public class ProtoWriterTests
     public unsafe void Randomized_Read_Write(int seed)
     {
         Random r = new Random(seed);
-        ProtoWriter writer = new ProtoWriter();
+        ArenaAllocator allocator = new();
+        ProtoWriter writer = new ProtoWriter(ref allocator);
         Span<byte> tempBuffer = stackalloc byte[1000];
         for (int i = 0; i < tempBuffer.Length; ++i)
             tempBuffer[i] = (byte)'a';
@@ -131,21 +130,18 @@ public class ProtoWriterTests
 
         var encoded = new byte[writer.GetTotalLength()];
         writer.CopyTo(encoded);
-        writer.Free();
+        allocator.Dispose();
 
         var decoded = Canonical.TestMessage.Parser.ParseFrom(encoded);
 
-        var allocator = new ArenaAllocator();
-        fixed (byte* ptr = encoded)
-        {
-            var protoReader = new ProtoReader(ptr, encoded.Length);
-            var decoded_zero = new Zero.TestMessage();
-            decoded_zero.Read(ref protoReader, ref allocator);
+        allocator = new ArenaAllocator();
+        var protoReader = new ProtoReader(encoded);
+        var decoded_zero = new Zero.TestMessage();
+        decoded_zero.Read(ref protoReader, ref allocator);
 
-            AssertEquals(decoded, in decoded_zero);
+        AssertEquals(decoded, in decoded_zero);
 
-            allocator.Free();
-        }
+        allocator.Dispose();
     }
 
     private unsafe void AssertEquals(Canonical.TestMessage canonical, in Zero.TestMessage zero)
@@ -169,7 +165,7 @@ public class ProtoWriterTests
             if (zero.F[i].Name.HasValue)
                 Assert.That(zero.F[i].Name.Value.ToString(), Is.EqualTo(canonical.F[i].Name));
             Assert.That((int)zero.F[i].OneOf->TypeCase, Is.EqualTo((int)canonical.F[i].OneOf.TypeCase));
-            if (zero.F[i].OneOf->TypeCase == OneOfMessage.TypeOneofCase.Scalar)
+            if (zero.F[i].OneOf->TypeCase == Zero.OneOfMessage.TypeOneofCase.Scalar)
             {
                 ref var zeroScalar = ref zero.F[i].OneOf->Scalar;
                 var canonicalScalar = canonical.F[i].OneOf.Scalar;
@@ -184,7 +180,7 @@ public class ProtoWriterTests
                 for (int j = 0; j < zeroScalar.Bytes.Length; ++j)
                     Assert.That(zeroScalar.Bytes[j], Is.EqualTo(canonicalScalar.Bytes[j]));
             }
-            else if (zero.F[i].OneOf->TypeCase == OneOfMessage.TypeOneofCase.OptionalScalar)
+            else if (zero.F[i].OneOf->TypeCase == Zero.OneOfMessage.TypeOneofCase.OptionalScalar)
             {
                 ref var zeroScalar = ref zero.F[i].OneOf->OptionalScalar;
                 var canonicalScalar = canonical.F[i].OneOf.OptionalScalar;
@@ -217,7 +213,7 @@ public class ProtoWriterTests
                         Assert.That(zeroScalar.Bytes.Value[j], Is.EqualTo(canonicalScalar.Bytes[j]));
                 }
             }
-            else if (zero.F[i].OneOf->TypeCase == OneOfMessage.TypeOneofCase.RepeatedScalar)
+            else if (zero.F[i].OneOf->TypeCase == Zero.OneOfMessage.TypeOneofCase.RepeatedScalar)
             {
                 ref var zeroScalar = ref zero.F[i].OneOf->RepeatedScalar;
                 var canonicalScalar = canonical.F[i].OneOf.RepeatedScalar;

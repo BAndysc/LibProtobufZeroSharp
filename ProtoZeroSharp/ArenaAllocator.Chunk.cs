@@ -8,7 +8,7 @@ public unsafe partial struct ArenaAllocator
     /// <summary>
     /// Single chunk of contiguous memory.
     /// </summary>
-    public struct Chunk
+    internal struct Chunk
     {
         public Chunk* Next;
         public int Used;
@@ -97,7 +97,7 @@ public unsafe partial struct ArenaAllocator
         }
     }
 
-    public struct ChunkOffset
+    internal struct ChunkOffset
     {
         public readonly Chunk* Chunk;
         public readonly int Offset;

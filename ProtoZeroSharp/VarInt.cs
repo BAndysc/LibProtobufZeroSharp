@@ -7,7 +7,7 @@ internal static class VarInt
 {
     internal const int MaxBytesCount = 10;
 
-    internal static int ReadVarint(Span<byte> input, out ulong value)
+    internal static int ReadVarint(ReadOnlySpan<byte> input, out ulong value)
     {
         if ((input[0] & 0x80) == 0)
         {

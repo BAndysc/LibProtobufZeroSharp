@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace ProtoZeroSharp;
 
-public class UnmanagedMapDebugView<TKey, TValue> where TKey : unmanaged where TValue : unmanaged
+internal class UnmanagedMapDebugView<TKey, TValue> where TKey : unmanaged where TValue : unmanaged
 {
     private readonly UnmanagedMap<TKey, TValue> _map;
 

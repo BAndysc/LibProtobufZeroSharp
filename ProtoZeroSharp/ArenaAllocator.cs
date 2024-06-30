@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace ProtoZeroSharp;
 
@@ -13,7 +14,7 @@ namespace ProtoZeroSharp;
 /// which can be moved forward, but you should never Move Forward more than you previously
 /// reserved using TakeContiguousSpan.
 /// </summary>
-public unsafe partial struct ArenaAllocator
+public unsafe partial struct ArenaAllocator : IAllocator
 {
     private const int DefaultChunkSize = 16384;
 
@@ -32,7 +33,7 @@ public unsafe partial struct ArenaAllocator
     /// <summary>
     /// Frees all the memory allocated by this ArenaAllocator.
     /// </summary>
-    public void Free()
+    public void Dispose()
     {
         Chunk.FreeChunksChain(first);
         first = last = null;
@@ -41,7 +42,7 @@ public unsafe partial struct ArenaAllocator
     /// <summary>
     /// Returns the current position in the ArenaAllocator.
     /// </summary>
-    public ChunkOffset Position => new ChunkOffset(last, last->Used);
+    internal ChunkOffset Position => new ChunkOffset(last, last->Used);
 
     /// <summary>
     /// Returns a contiguous span of bytes with the given length starting at the current position.
@@ -49,7 +50,7 @@ public unsafe partial struct ArenaAllocator
     /// If the current chunk doesn't have enough space, allocates a new chunk.
     /// </summary>
     /// <exception cref="ObjectDisposedException"></exception>
-    public Span<byte> ReserveContiguousSpan(int length)
+    internal Span<byte> ReserveContiguousSpan(int length)
     {
 #if DEBUG
         AssertNotDisposed();
@@ -64,7 +65,7 @@ public unsafe partial struct ArenaAllocator
         return span;
     }
 
-    public Span<byte> TakeContiguousSpan(int length)
+    internal Span<byte> TakeContiguousSpan(int length)
     {
         var span = ReserveContiguousSpan(length);
         MoveForward(length);
@@ -77,7 +78,7 @@ public unsafe partial struct ArenaAllocator
     /// And you should never exceed the length you reserved, as it may result in InvalidOperationException exception.
     /// </summary>
     /// <exception cref="InvalidOperationException"></exception>
-    public void MoveForward(int length)
+    internal void MoveForward(int length)
     {
 #if DEBUG
         AssertNotDisposed();
@@ -90,7 +91,7 @@ public unsafe partial struct ArenaAllocator
     /// <summary>
     /// Calculates the total length of all the chunks in this ArenaAllocator.
     /// </summary>
-    public int GetTotalLength()
+    internal int GetTotalLength()
     {
 #if DEBUG
         AssertNotDisposed();
@@ -110,7 +111,7 @@ public unsafe partial struct ArenaAllocator
     /// Copies the entire content of this ArenaAllocator to the given destination span.
     /// </summary>
     /// <param name="destination"></param>
-    public int CopyTo(Span<byte> destination)
+    internal int CopyTo(Span<byte> destination)
     {
         var chunk = first;
         int copiedBytes = 0;
@@ -129,7 +130,7 @@ public unsafe partial struct ArenaAllocator
     /// Writes the entire content of this ArenaAllocator to the given stream.
     /// </summary>
     /// <param name="stream"></param>
-    public void WriteTo(Stream stream)
+    internal void WriteTo(Stream stream)
     {
         var chunk = first;
 #if !NET5_0_OR_GREATER
@@ -149,9 +150,17 @@ public unsafe partial struct ArenaAllocator
         }
     }
 
+    public T* Allocate<T>(int count = 1) where T : unmanaged
+    {
+        var span = TakeContiguousSpan(count * sizeof(T));
+        return span.Length == 0 ? null : (T*)Unsafe.AsPointer(ref span[0]);
+    }
+
+#if DEBUG
     private void AssertNotDisposed()
     {
         if (last == null)
             throw new ObjectDisposedException("This ArenaAllocator has been disposed.");
     }
+#endif
 }

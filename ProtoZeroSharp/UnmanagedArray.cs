@@ -1,10 +1,16 @@
+#if DEBUG
 using System;
+#endif
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace ProtoZeroSharp;
 
+/// <summary>
+/// Low level, unmanaged array of unmanaged type T.
+/// Doesn't own the memory.
+/// </summary>
+/// <typeparam name="T"></typeparam>
 [DebuggerTypeProxy(typeof(UnmanagedArrayDebugView<>))]
 public readonly unsafe struct UnmanagedArray<T> where T : unmanaged
 {
@@ -27,13 +33,13 @@ public readonly unsafe struct UnmanagedArray<T> where T : unmanaged
                 throw new IndexOutOfRangeException();
             }
 #endif
-            return ref Unsafe.AsRef<T>(data[index]);
+            return ref Unsafe.AsRef(data[index]);
         }
     }
 
-    public static UnmanagedArray<T> AllocArray(int maxCount, ref ArenaAllocator memory)
+    public static UnmanagedArray<T> AllocArray<TAllocator>(int maxCount, ref TAllocator allocator) where TAllocator : unmanaged, IAllocator
     {
-        var data = memory.TakeContiguousSpan(maxCount * sizeof(T));
-        return new UnmanagedArray<T>(maxCount, (T*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(data)));
+        var data = allocator.Allocate<T>(maxCount);
+        return new UnmanagedArray<T>(maxCount, data);
     }
 }

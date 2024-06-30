@@ -249,9 +249,8 @@ public class ProtobufSourceGenerator : IIncrementalGenerator
 
                 if (!oneof.Inline)
                 {
-                    codeGenerator.OpenBlock($"public ref T Alloc{oneofName}<T>(ref ArenaAllocator memory) where T : unmanaged");
-                    codeGenerator.AppendLine($"var mem = memory.TakeContiguousSpan(sizeof(T));");
-                    codeGenerator.AppendLine($"{oneofName}Data = (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(mem));");
+                    codeGenerator.OpenBlock($"public ref T Alloc{oneofName}<T, TAllocator>(ref TAllocator memory) where T : unmanaged where TAllocator : unmanaged, IAllocator");
+                    codeGenerator.AppendLine($"{oneofName}Data = (byte*)memory.Allocate<T>();");
                     codeGenerator.AppendLine($"return ref Unsafe.AsRef<T>({oneofName}Data);");
                     codeGenerator.CloseBlock();
                 }
@@ -260,7 +259,7 @@ public class ProtobufSourceGenerator : IIncrementalGenerator
                     codeGenerator.AppendLine($"public ref {field.Type.ToCSharpType(false, false)} {field.Name} => ref {oneofName}<{field.Type.ToCSharpType(false, false)}>();");
             }
 
-            codeGenerator.OpenBlock("internal unsafe void Read(ref ProtoReader reader, ref ArenaAllocator memory)");
+            codeGenerator.OpenBlock("internal unsafe void Read<TAllocator>(ref ProtoReader reader, ref TAllocator memory) where TAllocator : unmanaged, IAllocator");
 
             foreach (var field in message.Fields.Where(f => f.IsRepeated))
             {
@@ -329,8 +328,9 @@ public class ProtobufSourceGenerator : IIncrementalGenerator
 
             foreach (var field in message.Fields.Where(f => f.IsRepeated))
             {
+                var genericType = field.Type.ToCSharpType(false, false);
                 codeGenerator.AppendLine(
-                    $"{field.Name} = UnmanagedArray<{field.Type.ToCSharpType(false, false)}>.AllocArray({field.Name}_count, ref memory);");
+                    $"{field.Name} = UnmanagedArray<{genericType}>.AllocArray<TAllocator>({field.Name}_count, ref memory);");
                 codeGenerator.AppendLine($"{field.Name}_count = 0;");
             }
 
@@ -339,7 +339,7 @@ public class ProtobufSourceGenerator : IIncrementalGenerator
                 var keyType = map.KeyType.ToCSharpType(false, false);
                 var valueType = map.ValueType.ToCSharpType(false, false);
                 codeGenerator.AppendLine(
-                    $"{map.Name} = UnmanagedMap<{keyType}, {valueType}>.AllocMap({map.Name}_count, ref memory);");
+                    $"{map.Name} = UnmanagedMap<{keyType}, {valueType}>.AllocMap<TAllocator>({map.Name}_count, ref memory);");
                 codeGenerator.AppendLine($"{map.Name}_count = 0;");
                 codeGenerator.AppendLine(
                     $"{map.Name}.GetUnderlyingArrays(out var {map.Name}_keys, out var {map.Name}_values);");
@@ -368,8 +368,8 @@ public class ProtobufSourceGenerator : IIncrementalGenerator
                     BuiltinTypes.Sfixed32 => $"(int){reader}.ReadFixed32()",
                     BuiltinTypes.Sfixed64 => $"(long){reader}.ReadFixed64()",
                     BuiltinTypes.Bool => $"{reader}.ReadBool()",
-                    BuiltinTypes.String => $"{reader}.ReadUtf8String(ref memory)",
-                    BuiltinTypes.Bytes => $"{reader}.ReadBytesArray(ref memory)",
+                    BuiltinTypes.String => $"{reader}.ReadUtf8String<TAllocator>(ref memory)",
+                    BuiltinTypes.Bytes => $"{reader}.ReadBytesArray<TAllocator>(ref memory)",
                     _ => throw new NotImplementedException($"Type {type} is not supported")
                 };
             }
@@ -384,7 +384,7 @@ public class ProtobufSourceGenerator : IIncrementalGenerator
                         codeGenerator.AppendLine("var subReader = reader.ReadMessage();");
                         codeGenerator.AppendLine($"{field.Name}[{field.Name}_count] = default;");
                         codeGenerator.AppendLine(
-                            $"{field.Name}[{field.Name}_count++].Read(ref subReader, ref memory);");
+                            $"{field.Name}[{field.Name}_count++].Read<TAllocator>(ref subReader, ref memory);");
                     }
                     else
                     {
@@ -416,23 +416,21 @@ public class ProtobufSourceGenerator : IIncrementalGenerator
                             if (field.IsOptionalPointer)
                             {
                                 var fieldType = field.Type.ToCSharpType(false, false);
-                                codeGenerator.AppendLine(
-                                    $"var {field.Name}_span = memory.TakeContiguousSpan(sizeof({fieldType}));");
-                                codeGenerator.AppendLine($"{field.Name} = ({fieldType}*)Unsafe.AsPointer(ref MemoryMarshal.GetReference({field.Name}_span));");
+                                codeGenerator.AppendLine($"{field.Name} = memory.Allocate<{fieldType}>();");
                                 codeGenerator.AppendLine($"*{field.Name} = default;");
-                                codeGenerator.AppendLine($"{field.Name}->Read(ref subReader, ref memory);");
+                                codeGenerator.AppendLine($"{field.Name}->Read<TAllocator>(ref subReader, ref memory);");
                             }
                             else
                             {
                                 codeGenerator.AppendLine($"{field.Name}.Value = default;");
-                                codeGenerator.AppendLine($"{field.Name}.Value.Read(ref subReader, ref memory);");
+                                codeGenerator.AppendLine($"{field.Name}.Value.Read<TAllocator>(ref subReader, ref memory);");
                                 codeGenerator.AppendLine($"{field.Name}.HasValue = true;");
                             }
                         }
                         else
                         {
                             codeGenerator.AppendLine($"{field.Name} = default;");
-                            codeGenerator.AppendLine($"{field.Name}.Read(ref subReader, ref memory);");
+                            codeGenerator.AppendLine($"{field.Name}.Read<TAllocator>(ref subReader, ref memory);");
                         }
                     }
                     else
@@ -459,7 +457,7 @@ public class ProtobufSourceGenerator : IIncrementalGenerator
                     codeGenerator.AppendLine("var subSubReader = subReader.ReadMessage();");
                     codeGenerator.AppendLine($"{map.Name}_values[{map.Name}_count] = default;");
                     codeGenerator.AppendLine(
-                        $"{map.Name}_values[{map.Name}_count].Read(ref subSubReader, ref memory);");
+                        $"{map.Name}_values[{map.Name}_count].Read<TAllocator>(ref subSubReader, ref memory);");
                 }
                 else
                 {
@@ -491,7 +489,7 @@ public class ProtobufSourceGenerator : IIncrementalGenerator
                         {
                             codeGenerator.AppendLine($"{oneof.Name}Data.{field.Name} = default;");
                             codeGenerator.AppendLine($"var subReader = reader.ReadMessage();");
-                            codeGenerator.AppendLine($"{oneof.Name}Data.{field.Name}.Read(ref subReader, ref memory);");
+                            codeGenerator.AppendLine($"{oneof.Name}Data.{field.Name}.Read<TAllocator>(ref subReader, ref memory);");
                         }
                         else
                         {
@@ -500,14 +498,14 @@ public class ProtobufSourceGenerator : IIncrementalGenerator
                     }
                     else
                     {
-                        codeGenerator.AppendLine($"var mem = memory.TakeContiguousSpan(sizeof({field.Type.ToCSharpType(false, false)}));");
-                        codeGenerator.AppendLine($"{oneof.Name}Data = (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(mem));");
-                        codeGenerator.AppendLine($"{field.Type.ToCSharpType(false, false)}* ptr = ({field.Type.ToCSharpType(false, false)}*){oneof.Name}Data;");
+                        var fieldType = field.Type.ToCSharpType(false, false);
+                        codeGenerator.AppendLine($"{field.Type.ToCSharpType(false, false)}* ptr = memory.Allocate<{fieldType}>();");
+                        codeGenerator.AppendLine($"{oneof.Name}Data = (byte*)ptr;");
                         if (field.Type.IsMessage)
                         {
                             codeGenerator.AppendLine("var subReader = reader.ReadMessage();");
                             codeGenerator.AppendLine("*ptr = default;");
-                            codeGenerator.AppendLine("ptr->Read(ref subReader, ref memory);");
+                            codeGenerator.AppendLine("ptr->Read<TAllocator>(ref subReader, ref memory);");
                         }
                         else
                         {

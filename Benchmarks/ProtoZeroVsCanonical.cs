@@ -59,7 +59,7 @@ public partial class ProtoZeroVsCanonical
 
         array.CopyTo(output);
 
-        array.Free();
+        array.Dispose();
 #endif
     }
 
@@ -68,7 +68,8 @@ public partial class ProtoZeroVsCanonical
     [Arguments(false)]
     public void ProtoZeroSharp(bool optimizeSizeOverPerformance)
     {
-        ProtoWriter writer = new ProtoWriter();
+        ArenaAllocator allocator = new();
+        ProtoWriter writer = new ProtoWriter(ref allocator);
 
         for (int j = 0; j < 200000; ++j)
         {
@@ -96,7 +97,7 @@ public partial class ProtoZeroVsCanonical
 
         writer.CopyTo(output);
 
-        writer.Free();
+        allocator.Dispose();
     }
 
     [Benchmark(Baseline = true)]

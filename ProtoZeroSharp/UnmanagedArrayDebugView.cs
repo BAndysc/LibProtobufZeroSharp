@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace ProtoZeroSharp;
 
-public class UnmanagedArrayDebugView<T> where T : unmanaged
+internal class UnmanagedArrayDebugView<T> where T : unmanaged
 {
     private readonly UnmanagedArray<T> _array;
 
