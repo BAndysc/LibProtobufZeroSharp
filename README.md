@@ -175,3 +175,41 @@ This library is faster than the official implementation because it uses unsafe c
 3. **Do not use** the generated structures after disposing the allocator. No matter if you use debug or release mode, you will get segmentation faults!
 4. You may copy the generated structures, but remember that they are just a shallow copy. And you may not use them after disposing the allocator.
 5. **Do not copy** the allocator! It is a struct and copying it will lead to bugs. Always pass it by `ref`.
+
+## Nuget
+
+This library is available on Nuget:
+
+```
+<PackageReference Include="ProtobufZeroSharp" Version="0.5.0" />
+```
+
+This is a Release-mode library with commented out safety checks, so that it is faster, but also potential misusage (i.e. ReadMessage when the current tag is a varint) may lead to segmentation faults. Include `ProtobufZeroSharp.Debug` package for additional safety checks.
+
+```
+<PackageReference Include="ProtobufZeroSharp.Debug" Version="0.5.0" />
+```
+
+You can also include those packages depending on your configuration:
+
+```
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="ProtobufZeroSharp.Debug" Version="0.5.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' != 'Debug'">
+    <PackageReference Include="ProtobufZeroSharp" Version="0.5.0" />
+  </ItemGroup>
+```
+
+For the source generator, include 
+```
+<PackageReference Include="ProtobufZero.Generator" Version="0.5.0.1" />
+```
+
+And add your .proto files to the project as AdditionalFiles.
+```xml
+<ItemGroup>
+    <AdditionalFiles Include="structures.proto" />
+</ItemGroup>
+```
